@@ -20,3 +20,13 @@ if аудио_запись:
     текст_вопроса = транскрипт.text
     st.subheader("Распознанный текст:")
     st.write(текст_вопроса)
+
+
+сообщения = [
+    {"role": "system", "content": "Вы — голосовой ассистент, отвечайте понятно и по существу."},
+    {"role": "user", "content": текст_вопроса}
+    ]
+ответ = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=сообщения)
+текст_ответа = ответ["choices"][0]["message"]["content"]
+st.subheader("Ответ ассистента:")
+st.write(текст_ответа)

@@ -1,3 +1,44 @@
-.idea/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.env
+*.venv
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
 venv/
-.env
+env/
+ENV/
+.venv/
+.idea/           # PyCharm
+.vscode/         # VS Code
+*.swp            # vim swap files
+
+# Django
+*.sqlite3        # если используешь SQLite
+db.sqlite3
+media/
+staticfiles/     # если STATIC_ROOT используется
+static/          # иногда генерируется вручную
+local_settings.py
+
+# Django migrations
+**/migrations/*
+!**/migrations/__init__.py
+
+# Pytest
+.cache/
+.pytest_cache/
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+
+# System
+.DS_Store         # macOS
+Thumbs.db         # Windows
