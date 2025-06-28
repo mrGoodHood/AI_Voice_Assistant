@@ -30,3 +30,31 @@ if аудио_запись:
 текст_ответа = ответ["choices"][0]["message"]["content"]
 st.subheader("Ответ ассистента:")
 st.write(текст_ответа)
+
+
+st.write("Производим синтез речи...")
+if движок.startswith("ElevenLabs"):
+    client = ElevenLabs(api_key="ВАШ_ELEVENLABS_API_KEY")
+    voice_id = "JBFqnCBsd6RMkjVDRZzb"  # пример: английский голос "George"
+    аудиоданные = client.text_to_speech.convert(
+        text=текст_ответа,
+        voice_id=voice_id,
+        model_id="eleven_multilingual_v2",
+        output_format="mp3_44100_128"
+    )
+    st.audio(аудиоданные, format="audio/mp3")
+else:
+        model, _ = torch.hub.load(
+        'snakers4/silero-models', 'silero_tts',
+        language='ru', speaker='v4_ru'
+    )
+model.to('cpu')
+аудио_массив = model.apply_tts(
+    text=текст_ответа,
+    speaker='xenia',
+    sample_rate=48000
+)
+буфер = io.BytesIO()
+sf.write(буфер, аудио_массив, 48000, format='WAV')
+буфер.seek(0)
+st.audio(буфер, format="audio/wav")
