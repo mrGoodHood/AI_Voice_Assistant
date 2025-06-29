@@ -7,46 +7,48 @@ import io
 
 st.title("Голосовой AI-ассистент")
 # Выбор движка синтеза речи
-движок = st.radio("Выберите движок синтеза речи:", ["ElevenLabs (платно)", "Silero TTS (бесплатно)"])
+engine = st.radio("Выберите движок синтеза речи:", ["ElevenLabs (платно)", "Silero TTS (бесплатно)"])
 
 st.write("Нажмите и удерживайте кнопку, чтобы записать вопрос голосом:")
 # Запись аудио с микрофона пользователя
-аудио_запись = st.audio_input("Запись аудио")
+audio = st.audio_input("Запись аудио")
 
-if аудио_запись:
+if audio:
     # Сохраняем записанное аудио во временный WAV-файл
     with open("вопрос.wav", "wb") as f:
-        f.write(аудио_запись.getbuffer())
+        f.write(audio.getbuffer())
 
     # Распознаём речь через Whisper API
-    аудио_файл = open("вопрос.wav", "rb")
-    транскрипт = openai.Audio.transcribe("whisper-1", аудио_файл, language="ru")
-    текст_вопроса = транскрипт.text
+    audio_file = open("вопрос.wav", "rb")
+    transcript = openai.Audio.transcribe("whisper-1", audio_file, language="ru")
+    text = transcript.text
     st.subheader("Распознанный текст:")
-    st.write(текст_вопроса)
+    st.write(text)
 
     # Генерируем ответ через ChatGPT (gpt-3.5-turbo)
-    сообщения = [
+    messages = [
         {"role": "system", "content": "Вы — голосовой ассистент, отвечайте понятно и по существу."},
-        {"role": "user", "content": текст_вопроса}
-    ]    ответ = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=сообщения)
-    текст_ответа = ответ["choices"][0]["message"]["content"]    st.subheader("Ответ ассистента:")
-    st.write(текст_ответа)
+        {"role": "user", "content": text}
+    ]
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    response_text = response["choices"][0]["message"]["content"]
+    st.subheader("Ответ ассистента:")
+    st.write(response_text)
 
     # Синтезируем ответ в речь
     st.write("Производим синтез речи...")
-    if движок.startswith("ElevenLabs"):
+    if engine.startswith("ElevenLabs"):
         # Используем ElevenLabs API (платно)
         client = ElevenLabs(api_key="ВАШ_ELEVENLABS_API_KEY")
         # Пример использования: voice_id можно получить через client.voices.search()
         voice_id = "JBFqnCBsd6RMkjVDRZzb"  # пример: английский голос "George"
-        аудиоданные = client.text_to_speech.convert(
-            text=текст_ответа,
+        audio_data = client.text_to_speech.convert(
+            text=response_text,
             voice_id=voice_id,
             model_id="eleven_multilingual_v2",
             output_format="mp3_44100_128"
         )
-        st.audio(аудиоданные, format="audio/mp3")
+        st.audio(audio_data, format="audio/mp3")
     else:
         # Используем Silero TTS (бесплатно)
         model, _ = torch.hub.load(
@@ -54,13 +56,13 @@ if аудио_запись:
             language='ru', speaker='v4_ru'
         )
         model.to('cpu')
-        аудио_массив = model.apply_tts(
-            text=текст_ответа,
+        audio_massive = model.apply_tts(
+            text=response_text,
             speaker='xenia',        # одна из русскоязычных актрис Silero
             sample_rate=48000
         )
         # Сохраняем аудио в буфер и воспроизводим
-        буфер = io.BytesIO()
-        sf.write(буфер, аудио_массив, 48000, format='WAV')
-        буфер.seek(0)
-        st.audio(буфер, format="audio/wav")
+        buffer = io.BytesIO()
+        sf.write(buffer, audio_massive, 48000, format='WAV')
+        buffer.seek(0)
+        st.audio(buffer, format="audio/wav")
