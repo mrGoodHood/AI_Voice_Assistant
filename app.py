@@ -5,6 +5,8 @@ import torch
 import soundfile as sf
 import io
 
+from jinja2.compiler import generate
+
 st.title("Голосовой AI-ассистент")
 # Выбор движка синтеза речи
 engine = st.radio("Выберите движок синтеза речи:", ["ElevenLabs (платно)", "Silero TTS (бесплатно)"])
@@ -38,29 +40,29 @@ if audio:
     # Синтезируем ответ в речь
     st.write("Производим синтез речи...")
     if engine.startswith("ElevenLabs"):
-        # Используем ElevenLabs API (платно)
-        client = ElevenLabs(api_key="ВАШ_ELEVENLABS_API_KEY")
-        # Пример использования: voice_id можно получить через client.voices.search()
-        voice_id = "JBFqnCBsd6RMkjVDRZzb"  # пример: английский голос "George"
-        audio_data = client.text_to_speech.convert(
+        audio_data = generate(
             text=response_text,
-            voice_id=voice_id,
-            model_id="eleven_multilingual_v2",
-            output_format="mp3_44100_128"
+            voice="George",  # можно заменить на подходящий голос
+            model="eleven_multilingual_v2"
         )
         st.audio(audio_data, format="audio/mp3")
     else:
-        # Используем Silero TTS (бесплатно)
-        model, _ = torch.hub.load(
-            'snakers4/silero-models', 'silero_tts',
-            language='ru', speaker='v4_ru'
-        )
-        model.to('cpu')
+        @st.cache_resource
+        def load_silero_model():
+            model, _ = torch.hub.load(
+                'snakers4/silero-models', 'silero_tts',
+                language='ru', speaker='v4_ru'
+            )
+            model.to('cpu')
+            return model
+
+        model = load_silero_model()
         audio_massive = model.apply_tts(
             text=response_text,
-            speaker='xenia',        # одна из русскоязычных актрис Silero
+            speaker='xenia',
             sample_rate=48000
         )
+
         # Сохраняем аудио в буфер и воспроизводим
         buffer = io.BytesIO()
         sf.write(buffer, audio_massive, 48000, format='WAV')
